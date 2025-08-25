@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notice Period Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Simple transition for the modal */
+        .modal-transition {
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        }
+        /* Gradient text style */
+        .gradient-text {
+            background-image: linear-gradient(to right, #8b5cf6, #ec4899);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 flex items-center justify-center min-h-screen p-4">
+
+    <!-- Main Calculator Card -->
+    <div class="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 space-y-6 border-t-4 border-purple-500">
+        <div class="text-center">
+            <h1 class="text-3xl font-extrabold text-gray-800 dark:text-white">
+                Notice Period <span class="gradient-text">Calculator</span>
+            </h1>
+            <p class="text-gray-500 dark:text-gray-400 mt-2">Find out when your notice period ends.</p>
+        </div>
+
+        <!-- Form Inputs -->
+        <div class="space-y-4">
+            <div>
+                <label for="notice-period" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notice Period</label>
+                <select id="notice-period" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <option value="30">30 Days</option>
+                    <option value="60">60 Days</option>
+                    <option value="90">90 Days</option>
+                </select>
+            </div>
+            <div>
+                <label for="start-date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start Date</label>
+                <input type="date" id="start-date" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+            </div>
+        </div>
+
+        <!-- Calculate Button -->
+        <button id="calculate-btn" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 dark:focus:ring-offset-gray-800 transition-all duration-300 transform hover:scale-105">
+            Calculate
+        </button>
+    </div>
+
+    <!-- Result Modal -->
+    <div id="result-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden modal-transition opacity-0 transform scale-95">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center space-y-4 relative overflow-hidden">
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Calculation Complete!</h2>
+            <div class="space-y-2">
+                <p class="text-gray-600 dark:text-gray-300">You have</p>
+                <p id="remaining-days" class="text-6xl font-extrabold gradient-text">0</p>
+                <p class="text-gray-600 dark:text-gray-300">days remaining.</p>
+            </div>
+            <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg">
+                <p class="text-sm text-gray-500 dark:text-gray-400">Your notice period ends on:</p>
+                <p id="end-date" class="text-lg font-semibold text-gray-900 dark:text-white">January 1, 2025</p>
+            </div>
+            <button id="close-modal-btn" class="mt-4 w-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 dark:focus:ring-offset-gray-800 transition-colors duration-300">
+                Close
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Get references to all the necessary DOM elements
+        const noticePeriodSelect = document.getElementById('notice-period');
+        const startDateInput = document.getElementById('start-date');
+        const calculateBtn = document.getElementById('calculate-btn');
+        const resultModal = document.getElementById('result-modal');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const remainingDaysEl = document.getElementById('remaining-days');
+        const endDateEl = document.getElementById('end-date');
+
+        // --- Confetti Animation ---
+        function triggerConfetti() {
+            const duration = 3 * 1000; // 3 seconds
+            const animationEnd = Date.now() + duration;
+            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 100 };
+
+            function randomInRange(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            const interval = setInterval(function() {
+                const timeLeft = animationEnd - Date.now();
+
+                if (timeLeft <= 0) {
+                    return clearInterval(interval);
+                }
+
+                const particleCount = 50 * (timeLeft / duration);
+                // since particles fall down, start a bit higher than random
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+            }, 250);
+        }
+
+        // Function to show the modal with a smooth transition
+        function showModal() {
+            resultModal.classList.remove('hidden');
+            // A tiny delay to allow the browser to apply the 'hidden' removal before starting the transition
+            setTimeout(() => {
+                resultModal.classList.remove('opacity-0', 'scale-95');
+                triggerConfetti(); // Fire the confetti!
+            }, 10);
+        }
+
+        // Function to hide the modal with a smooth transition
+        function hideModal() {
+            resultModal.classList.add('opacity-0', 'scale-95');
+            // Wait for the transition to finish before adding 'hidden'
+            setTimeout(() => {
+                resultModal.classList.add('hidden');
+            }, 300); // 300ms matches the transition duration
+        }
+
+        // Event listener for the calculate button
+        calculateBtn.addEventListener('click', () => {
+            const noticePeriod = parseInt(noticePeriodSelect.value);
+            const startDateValue = startDateInput.value;
+
+            // --- Input Validation ---
+            if (!startDateValue) {
+                const existingError = document.querySelector('.error-message');
+                if (existingError) existingError.remove();
+
+                const errorMsg = document.createElement('p');
+                errorMsg.textContent = 'Please select a start date.';
+                errorMsg.className = 'error-message text-red-500 text-sm text-center mt-2';
+                calculateBtn.insertAdjacentElement('afterend', errorMsg);
+                return;
+            } else {
+                const existingError = document.querySelector('.error-message');
+                if (existingError) existingError.remove();
+            }
+
+            // --- Date Calculation ---
+            const startDate = new Date(startDateValue + 'T00:00:00');
+            const endDate = new Date(startDate);
+            endDate.setDate(startDate.getDate() + noticePeriod);
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const timeDifference = endDate.getTime() - today.getTime();
+            const daysRemaining = Math.ceil(timeDifference / (1000 * 3600 * 24));
+
+            // --- Update Modal Content ---
+            remainingDaysEl.textContent = Math.max(0, daysRemaining);
+            endDateEl.textContent = endDate.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            // --- Show the Modal ---
+            showModal();
+        });
+
+        // Event listener for the close button in the modal
+        closeModalBtn.addEventListener('click', hideModal);
+
+        // Also allow closing the modal by clicking on the background overlay
+        resultModal.addEventListener('click', (event) => {
+            if (event.target === resultModal) {
+                hideModal();
+            }
+        });
+    </script>
+</body>
+</html>
